@@ -1,0 +1,3 @@
+terraform 0.12.5
+golang 1.12.7
+golang-dep v0.5.4

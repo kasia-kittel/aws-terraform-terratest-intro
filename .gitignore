@@ -1,0 +1,36 @@
+# Local .terraform directories
+**/.terraform/*
+
+# SSH Keys
+*.pem
+
+# Backup files
+*.bak
+
+# Ignore Mac .DS_Store files
+.DS_Store
+
+# Ignored vscode files
+.vscode/
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# (crash) logs
+*.log
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore Any Generated JSON Files
+**/*.json
+
+# Ignore go and golang-dep
+**/vendor/
+**/Godeps/
+/pkg/
