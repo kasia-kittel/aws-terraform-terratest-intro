@@ -21,6 +21,10 @@ output "aws-ec2-id" {
   value = module.aws-ec2-generic-test.aws-ec2-id
 }
 
+output "instance_public_ip" {
+  value = module.aws-ec2-generic-test.instance_public_ip
+}
+
 variable "aws-ec2-name" {
   description = "The name of the EC2 instance"
   type        = string

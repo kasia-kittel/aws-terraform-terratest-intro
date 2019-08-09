@@ -3,3 +3,9 @@ variable "aws-ec2-name" {
   type        = string
   default     = "generic"
 }
+
+variable "vpc_sg_id" {
+  description = "Security group id. Use default security group if not available"
+  type        = list(string)
+  default     = null
+}

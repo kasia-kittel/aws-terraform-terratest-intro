@@ -30,10 +30,13 @@ func TestTerraformAWSEC2Generic(t *testing.T) {
 	
 
 	// Run `terraform output` to get the value of an output variable
-	instanceID := terraform.Output(t, terraformOptions, "aws-ec2-id")
+    instanceID := terraform.Output(t, terraformOptions, "aws-ec2-id")
+    publicIp := terraform.Output(t, terraformOptions, "instance_public_ip")
 
 	instanceTags := aws.GetTagsForEc2Instance(t, "eu-west-2", instanceID)
 	nameTag := instanceTags["Name"]
-	assert.Equal(t, expectedName, nameTag)
+    assert.Equal(t, expectedName, nameTag)
+    
+    assert.NotEmpty(t, publicIp)
 }
 
