@@ -27,12 +27,23 @@ type Subnet struct {
 	MapPublicIpOnLaunch bool 
 }
 
-// Singe Route
+// Single Route
 type Route struct {
 	DestinationCidrBlock 	string
 	GatewayId 						string
 	Origin 								string
 	State 								string
+}
+
+type IpPermission struct {
+	FromPort			int64
+	ToPort				int64
+	IpProtocol		string
+}
+
+type SecurityGroup struct {
+	VpcId					string
+	IpPermissions []IpPermission
 }
 
 func GetVpcByID(t *testing.T, vpcId string, region string) *Vpc {
@@ -113,6 +124,52 @@ func GetRoutesForSubnet(t *testing.T, subnetId string, region string) []Route {
 	return routes
 }
 
+func GetSecurityGroupById(t *testing.T, groupId string, region string) *SecurityGroup {
+	var groupIDFilterName = "group-id"
+
+	ec2Client := terratest_aws.NewEc2Client(t, region)
+
+	groupIdFilter := ec2.Filter{
+		Name: &groupIDFilterName, 
+		Values: []*string{&groupId},
+	}
+
+	sg, sg_err := ec2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{Filters: []*ec2.Filter{&groupIdFilter}})
+	
+	if sg_err != nil {
+		t.Fatal(sg_err)
+	}
+
+	sglen := len(sg.SecurityGroups)
+
+	// TODO is it safe to assume there will be at most one group?
+	if sglen >1 {
+		t.Fatal("Too many security groups. This should never happen")
+	}
+
+	if sglen == 0 {
+		t.Fatal("No security group found!")
+	}
+
+	iplen := len(sg.SecurityGroups[0].IpPermissions)
+	ips := make([]IpPermission, iplen)
+
+	if iplen > 0 {
+		for i, ip := range sg.SecurityGroups[0].IpPermissions {
+			ips[i] = IpPermission {
+				FromPort:	aws.Int64Value(ip.FromPort),
+				ToPort: aws.Int64Value(ip.ToPort),
+				IpProtocol: aws.StringValue(ip.IpProtocol),
+			}
+		}	
+	}
+
+	return &SecurityGroup{
+		VpcId:  aws.StringValue(sg.SecurityGroups[0].VpcId),
+		IpPermissions: ips,
+	}
+}
+
 func VerifyContainPublicRoute(routes []Route, igwId string) bool {
 	
 	var found bool = false
@@ -151,7 +208,7 @@ func TestTerraformAWSNetwork(t *testing.T) {
 	vpcId := terraform.Output(t, terraformOptions, "main-vpc-id")
 	publicSubnetId := terraform.Output(t, terraformOptions, "public-subnet-id")
 	defaultIgwId := terraform.Output(t, terraformOptions, "default-igw-id")
-	
+	groupId := terraform.Output(t, terraformOptions, "ssh-sg-id")
 
 	vpc := GetVpcByID(t, vpcId, region)
 	subnets := vpc.Subnets
@@ -178,4 +235,17 @@ func TestTerraformAWSNetwork(t *testing.T) {
 		assert.True(t, VerifyContainPublicRoute(routes, defaultIgwId))
 		assert.True(t, subnets[0].MapPublicIpOnLaunch)
 	}) 
+
+	t.Run("test if security group gives access to ssh", func(t *testing.T){
+		sg := GetSecurityGroupById(t, groupId, region)
+
+		sshIpPermission := IpPermission {
+			FromPort:	22,
+			ToPort: 22,
+			IpProtocol: "tcp",
+		}
+		assert.Equal(t, sg.VpcId, vpcId)
+		assert.Equal(t, len(sg.IpPermissions), 1)
+		assert.Equal(t, sg.IpPermissions[0], sshIpPermission)
+	})
 }

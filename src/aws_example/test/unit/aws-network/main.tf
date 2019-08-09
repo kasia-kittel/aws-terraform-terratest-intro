@@ -33,6 +33,10 @@ output "default-igw-id" {
   value = module.aws-network-test.default-igw-id
 }
 
+output "ssh-sg-id" {
+  value = module.aws-network-test.ssh-sg-id
+}
+
 variable "region" {
   description = "The AWS region"
   type        = string

@@ -12,3 +12,8 @@ output "default-igw-id" {
   value = aws_internet_gateway.default.id
   description = "The public subnet id"
 }
+
+output "ssh-sg-id" {
+  value = aws_security_group.ssh.id
+  description = "Ssh access security group"
+}
