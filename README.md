@@ -33,7 +33,7 @@ When aws-vault is set up all terraform command need to prefix with `aws-vault ex
 Terratest needs Go compiler installed and $GOPATH set.
 1. Set the `$GOPATH` ie. go to your project's directory and `export GOPATH=$PWD`
 2. Install  and setup desired version of Go:  
-   3. 	`asdf install golang 1.12.7`
+   3. `asdf install golang 1.12.7`
    2. `asdf local golang 1.12.7`
 3. Install  and setup desired version of Golang-dep:
   1.  `asdf install golang-dep v0.5.4`
@@ -50,6 +50,16 @@ Terratest also need to be run with the aws-vault wrapper ie: `aws-vault exec tes
 
 ###Useful readings
  https://blog.gruntwork.io/authenticating-to-aws-with-environment-variables-e793d6f6d02e
+
+## Isolating Terratest executions
+
+### Terraform workspaces
+Some backends support multiple workspaces. It means that the state file is separate for each workspace, so execution of terraform scripts in different workspaces doesn't overwrite the state files.
+For example in S3 backed the default workspace will be created in a path defined by the _key_ setting. Any other workspace will be created in the same bucket but within /env:/[workspace_name] path.
+
+Listing existing workspaces: `terraform workspace list`
+Showing current workspace: `terraform worspace show`
+Changin to new workspace: `terraform workspace selecet [workspace_name]`
 
 
 
