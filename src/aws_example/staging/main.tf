@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "ee-tf-remote-state-kkittel"
-    key            = "staging/aws-ec2-generic/terraform.tfstate"
+    key            = "staging/terraform.tfstate"
     region         = "eu-west-2"
     dynamodb_table = "ee-tf-locks-kkittel"
     encrypt        = true
