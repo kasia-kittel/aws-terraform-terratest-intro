@@ -26,3 +26,13 @@ variable "public-subnet-name" {
   default = "Public Subnet"
 }
 
+variable "private-subnet-cidr" {
+  description = "The CIDR of the private subnet"
+  type        = string
+}
+
+variable "private-subnet-name" {
+  description = "Name tag of the private subnet"
+  type = string
+  default = "Private Subnet"
+}

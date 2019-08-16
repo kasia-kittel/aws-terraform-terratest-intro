@@ -33,6 +33,19 @@ resource "aws_subnet" "public" {
     }
 }
 
+resource "aws_subnet" "private" {
+    vpc_id = aws_vpc.main.id
+
+    cidr_block = var.private-subnet-cidr
+    
+    map_public_ip_on_launch = false
+    
+    tags = {
+        Project = "terraform-example-kasia"
+        Name = var.private-subnet-name
+    }
+}
+
 resource "aws_route_table" "public" {
     vpc_id = aws_vpc.main.id
 
@@ -52,9 +65,9 @@ resource "aws_route_table_association" "public" {
     route_table_id = aws_route_table.public.id
 }
 
-resource "aws_security_group" "ssh" {
-    name        = "erraform-example-allow_ssh"
-    description = "Allow SSH inbound traffic"
+resource "aws_security_group" "public_ssh" {
+    name        = "terraform-example-allow_ssh"
+    description = "Allow SSH inbound traffic from the Internet"
     
     vpc_id = aws_vpc.main.id
 
@@ -74,6 +87,25 @@ resource "aws_security_group" "ssh" {
     
     tags = {
         Project = "terraform-example-kasia"
-        Name = "ssh-security-group"
+        Name = "public-ssh-security-group"
+    }
+}
+
+resource "aws_security_group" "private_ssh" {
+    name        = "erraform-example-allow_ssh"
+    description = "Allow SSH inbound from inside VPN"
+    
+    vpc_id = aws_vpc.main.id
+
+    ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.public-subnet-cidr]
+    }
+    
+    tags = {
+        Project = "terraform-example-kasia"
+        Name = "private-ssh-security-group"
     }
 }

@@ -19,6 +19,8 @@ module "aws-network-test" {
   default-igw-name = "default-igw-test "
   public-subnet-cidr = var.public-subnet-cidr
   public-subnet-name = var.public-subnet-name
+  private-subnet-cidr = var.private-subnet-cidr
+  private-subnet-name = var.private-subnet-name
 }
 
 output "main-vpc-id" {
@@ -29,12 +31,20 @@ output "public-subnet-id" {
   value = module.aws-network-test.public-subnet-id
 }
 
+output "private-subnet-id" {
+  value = module.aws-network-test.private-subnet-id
+}
+
 output "default-igw-id" {
   value = module.aws-network-test.default-igw-id
 }
 
-output "ssh-sg-id" {
-  value = module.aws-network-test.ssh-sg-id
+output "public-ssh-sg-id" {
+  value = module.aws-network-test.public-ssh-sg-id
+}
+
+output "private-ssh-sg-id" {
+  value = module.aws-network-test.private-ssh-sg-id
 }
 
 variable "region" {
@@ -65,4 +75,16 @@ variable "public-subnet-name" {
   description = "Name tag of the public subnet"
   type        = string
   default     = "public-subnet-test"
+}
+
+variable "private-subnet-cidr" {
+  description = "The CIDR of public subnet"
+  type        = string
+  default     = "10.10.2.0/24"
+}
+
+variable "private-subnet-name" {
+  description = "Name tag of the public subnet"
+  type        = string
+  default     = "private-subnet-test"
 }

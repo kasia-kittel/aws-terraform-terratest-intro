@@ -39,6 +39,7 @@ type IpPermission struct {
 	FromPort			int64
 	ToPort				int64
 	IpProtocol		string
+	Ips 					[]string
 }
 
 type SecurityGroup struct {
@@ -95,6 +96,19 @@ func GetVpcByID(t *testing.T, vpcId string, region string) *Vpc {
 	}
 }
 
+func (vpc Vpc) GetSubnetById(t *testing.T, subnetId string) *Subnet {
+
+	for _, s := range vpc.Subnets {
+		if(s.Id == subnetId){
+			return &s
+		}
+	}
+
+	//TODO fatal or error, what is better?
+	t.Error("Subnet doesn't exists in given vpc")
+	return nil
+}
+
 func GetRoutesForSubnet(t *testing.T, subnetId string, region string) []Route {
 	var subnetIdFilterName = "association.subnet-id"
 
@@ -110,6 +124,10 @@ func GetRoutesForSubnet(t *testing.T, subnetId string, region string) []Route {
 		t.Fatal(rts_err)
 	}
 
+	if len(rts.RouteTables) == 0 {
+		return make([]Route, 0)
+	}
+
 	rtslen := len(rts.RouteTables[0].Routes)
 	routes := make([]Route, rtslen)
 
@@ -121,6 +139,7 @@ func GetRoutesForSubnet(t *testing.T, subnetId string, region string) []Route {
 			State: aws.StringValue(r.State),
 		}
 	}
+
 	return routes
 }
 
@@ -156,10 +175,17 @@ func GetSecurityGroupById(t *testing.T, groupId string, region string) *Security
 
 	if iplen > 0 {
 		for i, ip := range sg.SecurityGroups[0].IpPermissions {
+			
+			iprs := make([]string, len(ip.IpRanges))
+			for ii, ipr := range ip.IpRanges {
+				iprs[ii] = *ipr.CidrIp
+			}
+
 			ips[i] = IpPermission {
 				FromPort:	aws.Int64Value(ip.FromPort),
 				ToPort: aws.Int64Value(ip.ToPort),
 				IpProtocol: aws.StringValue(ip.IpProtocol),
+				Ips: iprs,
 			}
 		}	
 	}
@@ -171,7 +197,6 @@ func GetSecurityGroupById(t *testing.T, groupId string, region string) *Security
 }
 
 func VerifyContainPublicRoute(routes []Route, igwId string) bool {
-	
 	var found bool = false
 
 	for _, r := range routes {
@@ -184,11 +209,12 @@ func VerifyContainPublicRoute(routes []Route, igwId string) bool {
 }
 
 func TestTerraformAWSNetwork(t *testing.T) {
-		t.Parallel()
+		//t.Parallel()
 
 	expectedVpcCidr :=  "10.10.0.0/16"
 	expectedVpcName := "main-vpc-test"
 	expectedPublicSubnetCidr :=  "10.10.1.0/24"
+	expectedPrivateSubnetCidr :=  "10.10.2.0/24"
 	region := "eu-west-2"
 
 	terraformOptions := &terraform.Options{
@@ -199,6 +225,7 @@ func TestTerraformAWSNetwork(t *testing.T) {
 			"main-vpc-cidr": expectedVpcCidr,
 			"main-vpc-name": expectedVpcName,
 			"public-subnet-cidr": expectedPublicSubnetCidr,
+			"private-subnet-cidr": expectedPrivateSubnetCidr,
 		},
 	}
 
@@ -207,8 +234,10 @@ func TestTerraformAWSNetwork(t *testing.T) {
 
 	vpcId := terraform.Output(t, terraformOptions, "main-vpc-id")
 	publicSubnetId := terraform.Output(t, terraformOptions, "public-subnet-id")
+	privateSubnetId := terraform.Output(t, terraformOptions, "private-subnet-id") 
 	defaultIgwId := terraform.Output(t, terraformOptions, "default-igw-id")
-	groupId := terraform.Output(t, terraformOptions, "ssh-sg-id")
+	publicSshGroupId := terraform.Output(t, terraformOptions, "public-ssh-sg-id")
+	privateSshGroupId := terraform.Output(t, terraformOptions, "private-ssh-sg-id")
 
 	vpc := GetVpcByID(t, vpcId, region)
 	subnets := vpc.Subnets
@@ -217,35 +246,55 @@ func TestTerraformAWSNetwork(t *testing.T) {
 		assert.Equal(t, expectedVpcCidr, vpc.CidrBlock)
 	})
 
-	t.Run("test if VPC has one, correct subnetwork", func(t *testing.T) {
+	t.Run("test if VPC has two, correct subnetworks", func(t *testing.T) {
 		numSubnets := len(subnets)
 		
-		assert.Equal(t, 1, numSubnets)
-		assert.Equal(t, subnets[0].Id, publicSubnetId)
-		assert.Equal(t, subnets[0].CidrBlock, expectedPublicSubnetCidr)
+		assert.Equal(t, 2, numSubnets)
+		assert.Equal(t, vpc.GetSubnetById(t, publicSubnetId).CidrBlock, expectedPublicSubnetCidr)
+		assert.Equal(t, vpc.GetSubnetById(t, privateSubnetId).CidrBlock, expectedPrivateSubnetCidr)
 	
 	})
 
-	t.Run("test if the subnetwork is public", func(t *testing.T){
+	t.Run("test if the public subnetwork is correctly setup", func(t *testing.T){
 		// A public subnet is a subnet that's associated with a 
 		// route table that has a route to an Internet gateway.
 		// source: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html
 
 		routes := GetRoutesForSubnet(t, publicSubnetId, region)
 		assert.True(t, VerifyContainPublicRoute(routes, defaultIgwId))
-		assert.True(t, subnets[0].MapPublicIpOnLaunch)
+		assert.True(t, vpc.GetSubnetById(t, publicSubnetId).MapPublicIpOnLaunch)
 	}) 
 
-	t.Run("test if security group gives access to ssh", func(t *testing.T){
-		sg := GetSecurityGroupById(t, groupId, region)
+	t.Run("test if the private subnetwork is correctly setup", func(t *testing.T){
+		routes := GetRoutesForSubnet(t, privateSubnetId, region)
+		assert.False(t, VerifyContainPublicRoute(routes, defaultIgwId))
+	})
+
+	t.Run("test if public-ssh-security-group gives public access to ssh", func(t *testing.T){
+		sg := GetSecurityGroupById(t, publicSshGroupId, region)
 
 		sshIpPermission := IpPermission {
 			FromPort:	22,
 			ToPort: 22,
 			IpProtocol: "tcp",
+			Ips: []string{"0.0.0.0/0"},
 		}
 		assert.Equal(t, sg.VpcId, vpcId)
 		assert.Equal(t, len(sg.IpPermissions), 1)
 		assert.Equal(t, sg.IpPermissions[0], sshIpPermission)
+	})
+
+	t.Run("test if private-ssh-security-group gives access to ssh only from public subnet", func(t *testing.T){
+		sg := GetSecurityGroupById(t, privateSshGroupId, region)
+
+		privateSshIpPermission := IpPermission {
+			FromPort:	22,
+			ToPort: 22,
+			IpProtocol: "tcp",
+			Ips: []string{expectedPublicSubnetCidr},
+		}
+		assert.Equal(t, sg.VpcId, vpcId)
+		assert.Equal(t, len(sg.IpPermissions), 1)
+		assert.Equal(t, sg.IpPermissions[0], privateSshIpPermission)
 	})
 }
