@@ -2,22 +2,18 @@ package test
 
 import (
 		"bufio"
-    // "crypto/rand"
-    // "crypto/rsa"
     "crypto/x509"
     "encoding/pem"
     "os"
 		"testing"
 		"strings"
 		"fmt"
+		"time"
 
     "github.com/gruntwork-io/terratest/modules/terraform"
-		// "github.com/gruntwork-io/terratest/modules/retry"
+		"github.com/gruntwork-io/terratest/modules/retry"
 		"github.com/gruntwork-io/terratest/modules/ssh"
 )
-// test ssh connection
-// isolate from the real infra - region and workspace is enough?
-
 
 func CleanUp(t *testing.T, terraformOptions *terraform.Options, 
 	currentWorkspace string, testWorkspace string){
@@ -33,8 +29,6 @@ func CleanUp(t *testing.T, terraformOptions *terraform.Options,
 // to generate compatible key pair use: `ssh-keygen -t rsa -b 4096 -m PEM`
 func LoadSshKeyFromFile(t *testing.T, pathToPrivateKey string) *ssh.KeyPair {
 	// this is not safe!
-	//privateKeyFile, err := os.Open("/Users/kasia/.ssh/terratest-examples")
-
 	privateKeyFile, file_err := os.Open(pathToPrivateKey)
 	
 	if file_err != nil {
@@ -52,7 +46,6 @@ func LoadSshKeyFromFile(t *testing.T, pathToPrivateKey string) *ssh.KeyPair {
 	privateKeyImported, pk_err := x509.ParsePKCS1PrivateKey(data.Bytes) //*rsa.PrivateKey
 	if pk_err != nil {
 			t.Fatalf("Key parsing not possible: %v.", pk_err)
-			//os.Exit(1)
 	}
 
 	keyPemBlock := &pem.Block{
@@ -92,7 +85,9 @@ func TestTerraformSshConnection(t *testing.T,) {
 	// TODO defer not called when InitAndApply failed on missing AMI. Why?
 	defer CleanUp(t, terraformOptions, currentWorkspace, workspaceNameForTest)
 	
-	publicInstanceIP := terraform.Output(t, terraformOptions, "host_ip")
+	publicInstanceIP := terraform.Output(t, terraformOptions, "bastion_ip")
+	privateInstanceIP := terraform.Output(t, terraformOptions, "host_private_ip")
+
 
 	keyPair := LoadSshKeyFromFile(t, "/Users/kasia/.ssh/terratest-examples") //TODO test with ~
 
@@ -102,18 +97,32 @@ func TestTerraformSshConnection(t *testing.T,) {
 		SshUserName: "ubuntu",
 	}
 
-	t.Run("test if ssh connection to the host works", func(t *testing.T){
+	privateHost := ssh.Host{
+		Hostname:    privateInstanceIP,
+		SshKeyPair:  keyPair,
+		SshUserName: "ubuntu",
+	}
+
+	t.Run("test if ssh connection via bastion to the private host works", func(t *testing.T){
 		expectedText := "Hello, World"
 		command := fmt.Sprintf("echo -n '%s'", expectedText)
-		actualText, ssh_err := ssh.CheckSshCommandE(t, publicHost, command)
-	
-		if ssh_err != nil {
-			t.Fatalf("Problem connecting via ssh to the host %v", ssh_err)
-		}
-	
-		if strings.TrimSpace(actualText) != expectedText {
-			t.Fail()
-		}
+
+		maxRetries := 30
+		timeBetweenRetries := 5 * time.Second
+		description := fmt.Sprintf("SSH to private host %s via public host %s", privateInstanceIP, publicInstanceIP)
+
+		retry.DoWithRetry(t, description, maxRetries, timeBetweenRetries, func() (string, error) {
+			actualText, ssh_err := ssh.CheckPrivateSshConnectionE(t, publicHost, privateHost, command)
+
+			if ssh_err != nil {
+				t.Fatalf("Problem connecting via ssh to the host %v", ssh_err)
+			}
+		
+			if strings.TrimSpace(actualText) != expectedText {
+				t.Fail()
+			}
+			return "", nil
+		})
 
 	})
 	
