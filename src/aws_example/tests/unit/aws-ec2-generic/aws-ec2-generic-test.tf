@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-2"
+  region = var.region
 }
 
 module "aws-ec2-generic-test" {
@@ -21,12 +21,15 @@ output "aws-ec2-id" {
   value = module.aws-ec2-generic-test.aws-ec2-id
 }
 
-output "instance_public_ip" {
-  value = module.aws-ec2-generic-test.instance_public_ip
+output "instance-public-ip" {
+  value = module.aws-ec2-generic-test.instance-public-ip
 }
 
 variable "aws-ec2-name" {
-  description = "The name of the EC2 instance"
-  type        = string
-  default = "generic - test"
+  type      = string
+  default   = "generic - test"
+}
+
+variable "region" {
+  type = string
 }

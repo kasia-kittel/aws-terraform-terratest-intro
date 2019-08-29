@@ -15,15 +15,5 @@ output "private-subnet-id" {
 
 output "default-igw-id" {
   value = aws_internet_gateway.default.id
-  description = "The public subnet id"
-}
-
-output "public-ssh-sg-id" {
-  value = aws_security_group.public_ssh.id
-  description = "sSh access security group"
-}
-
-output "private-ssh-sg-id" {
-  value = aws_security_group.private_ssh.id
-  description = "Ssh from vpc network - security group"
+  description = "The default IGW id"
 }

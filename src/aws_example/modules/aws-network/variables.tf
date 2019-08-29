@@ -9,6 +9,7 @@ variable "main-vpc-name" {
   default = "Main VPC"
 }
 
+// TODO do I need it?
 variable "default-igw-name" {
   description = "Name tag of the main IGW"
   type = string
@@ -20,10 +21,11 @@ variable "public-subnet-cidr" {
   type        = string
 }
 
+// TODO do I need it?
 variable "public-subnet-name" {
   description = "Name tag of the public subnet"
   type = string
-  default = "Public Subnet"
+  default = "Default Public Subnet"
 }
 
 variable "private-subnet-cidr" {
@@ -31,8 +33,9 @@ variable "private-subnet-cidr" {
   type        = string
 }
 
+// TODO do I need it?
 variable "private-subnet-name" {
   description = "Name tag of the private subnet"
   type = string
-  default = "Private Subnet"
+  default = "Default Private Subnet"
 }

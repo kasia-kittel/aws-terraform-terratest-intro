@@ -1,5 +1,5 @@
 terraform {
-    required_version = ">= 0.12"
+  required_version = ">= 0.12"
 }
 
 resource "aws_vpc" "main" {
@@ -63,49 +63,4 @@ resource "aws_route_table" "public" {
 resource "aws_route_table_association" "public" {
     subnet_id = aws_subnet.public.id
     route_table_id = aws_route_table.public.id
-}
-
-resource "aws_security_group" "public_ssh" {
-    name        = "terraform-example-allow_ssh"
-    description = "Allow SSH inbound traffic from the Internet"
-    
-    vpc_id = aws_vpc.main.id
-
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-    
-    tags = {
-        Project = "terraform-example-kasia"
-        Name = "public-ssh-security-group"
-    }
-}
-
-resource "aws_security_group" "private_ssh" {
-    name        = "erraform-example-allow_ssh"
-    description = "Allow SSH inbound from inside VPN"
-    
-    vpc_id = aws_vpc.main.id
-
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = [var.public-subnet-cidr]
-    }
-    
-    tags = {
-        Project = "terraform-example-kasia"
-        Name = "private-ssh-security-group"
-    }
 }

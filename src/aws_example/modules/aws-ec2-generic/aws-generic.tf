@@ -6,9 +6,9 @@ resource "aws_instance" "aws-ec2" {
   ami           =  data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 
-  vpc_security_group_ids = var.vpc_sg_id
-  subnet_id = var.subnet_id
-  key_name = var.key_name
+  vpc_security_group_ids = var.vpc-sg-ids
+  subnet_id = var.subnet-id
+  key_name = var.key-name
 
   tags = {
     Project = "terraform-example-kasia"

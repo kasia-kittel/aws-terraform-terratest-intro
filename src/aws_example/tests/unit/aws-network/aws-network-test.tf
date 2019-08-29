@@ -15,12 +15,12 @@ provider "aws" {
 module "aws-network-test" {
   source = "../../../modules/aws-network"
   main-vpc-cidr  = var.main-vpc-cidr
-  main-vpc-name = var.main-vpc-name
-  default-igw-name = "default-igw-test "
+  main-vpc-name = "main-vpc-test"
+  default-igw-name = "default-igw-test"
   public-subnet-cidr = var.public-subnet-cidr
-  public-subnet-name = var.public-subnet-name
+  public-subnet-name = "public-subnet-test"
   private-subnet-cidr = var.private-subnet-cidr
-  private-subnet-name = var.private-subnet-name
+  private-subnet-name = "private-subnet-test"
 }
 
 output "main-vpc-id" {
@@ -39,13 +39,13 @@ output "default-igw-id" {
   value = module.aws-network-test.default-igw-id
 }
 
-output "public-ssh-sg-id" {
-  value = module.aws-network-test.public-ssh-sg-id
-}
+# output "public-ssh-sg-id" {
+#   value = module.aws-network-test.public-ssh-sg-id
+# }
 
-output "private-ssh-sg-id" {
-  value = module.aws-network-test.private-ssh-sg-id
-}
+# output "private-ssh-sg-id" {
+#   value = module.aws-network-test.private-ssh-sg-id
+# }
 
 variable "region" {
   description = "The AWS region"
@@ -59,11 +59,11 @@ variable "main-vpc-cidr" {
   default     = "10.10.0.0/16"
 }
 
-variable "main-vpc-name" {
-  description = "The name of the main VPC"
-  type        = string
-  default     = "main-vpc-test"
-}
+# variable "main-vpc-name" {
+#   description = "The name of the main VPC"
+#   type        = string
+#   default     = "main-vpc-test"
+# }
 
 variable "public-subnet-cidr" {
   description = "The CIDR of public subnet"
@@ -71,11 +71,11 @@ variable "public-subnet-cidr" {
   default     = "10.10.1.0/24"
 }
 
-variable "public-subnet-name" {
-  description = "Name tag of the public subnet"
-  type        = string
-  default     = "public-subnet-test"
-}
+# variable "public-subnet-name" {
+#   description = "Name tag of the public subnet"
+#   type        = string
+#   default     = "public-subnet-test"
+# }
 
 variable "private-subnet-cidr" {
   description = "The CIDR of public subnet"
@@ -83,8 +83,8 @@ variable "private-subnet-cidr" {
   default     = "10.10.2.0/24"
 }
 
-variable "private-subnet-name" {
-  description = "Name tag of the public subnet"
-  type        = string
-  default     = "private-subnet-test"
-}
+# variable "private-subnet-name" {
+#   description = "Name tag of the public subnet"
+#   type        = string
+#   default     = "private-subnet-test"
+# }
