@@ -14,6 +14,7 @@ resource "aws_instance" "aws-ec2" {
     Project = "terraform-example-kasia"
     Name = var.aws-ec2-name
   }
+  availability_zone = var.availability-zone
 }
 
 data "aws_ami" "ubuntu" {

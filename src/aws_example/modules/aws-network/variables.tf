@@ -39,3 +39,9 @@ variable "private-subnet-name" {
   type = string
   default = "Default Private Subnet"
 }
+
+variable "availability-zone" {
+  description = "Availabilty zone to be used"
+  type        = string
+  default     = null
+}

@@ -10,7 +10,7 @@ resource "aws_vpc" "main" {
     Name = var.main-vpc-name
   }
 }
-
+// czy bedzie potrzebna?
 resource "aws_internet_gateway" "default" {
   vpc_id = aws_vpc.main.id
 
@@ -31,6 +31,8 @@ resource "aws_subnet" "public" {
         Project = "terraform-example-kasia"
         Name = var.public-subnet-name
     }
+
+    availability_zone = var.availability-zone 
 }
 
 resource "aws_subnet" "private" {
@@ -44,6 +46,8 @@ resource "aws_subnet" "private" {
         Project = "terraform-example-kasia"
         Name = var.private-subnet-name
     }
+
+    availability_zone = var.availability-zone 
 }
 
 resource "aws_route_table" "public" {

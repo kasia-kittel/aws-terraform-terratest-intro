@@ -21,3 +21,9 @@ variable "key-name" {
   type        = string
   default     = null
 }
+
+variable "availability-zone" {
+  description = "Availabilty zone to be used"
+  type        = string
+  default     = null
+}

@@ -1,4 +1,4 @@
-##Setting up Terraform and Terratest to work with AWS roles
+## Setting up Terraform and Terratest to work with AWS roles
 
 ### AWS Cli setup
 1. Request AWS credentials on `#ask-aws` Slack channel.
@@ -31,7 +31,7 @@ When aws-vault is set up all terraform command need to prefix with `aws-vault ex
 
 ### Terratest
 Terratest needs Go compiler installed and $GOPATH set.
-1. Set the `$GOPATH` ie. go to your project's directory and `export GOPATH=$PWD`
+1. Set the `$GOPATH` ie. go to your project's directory and `cd ..`
 2. Install  and setup desired version of Go:  
    3. `asdf install golang 1.12.7`
    2. `asdf local golang 1.12.7`
